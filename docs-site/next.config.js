@@ -4,10 +4,11 @@ const withNextra = require('nextra')({
 })
 
 module.exports = withNextra({
+  output: 'export',
   images: {
     unoptimized: true
   },
-  trailingSlash: false,
+  trailingSlash: true,
   reactStrictMode: true,
   async redirects() {
     return [
