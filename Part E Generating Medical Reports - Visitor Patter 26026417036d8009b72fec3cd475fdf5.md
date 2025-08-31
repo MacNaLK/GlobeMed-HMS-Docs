@@ -1,0 +1,1544 @@
+# Part E: Generating Medical Reports - Visitor Pattern
+
+**Document**: Part E Analysis
+
+**Pattern**: Visitor Pattern
+
+**Module**: Medical Reports Generation System
+
+**Author**: Ishara Lakshitha
+
+---
+
+## Table of Contents
+
+---
+
+## 1. Overview & Problem Statement
+
+### Healthcare Domain Problems Addressed
+
+**Problem 1: Diverse Reporting Requirements**
+
+- Healthcare systems need multiple types of reports for different stakeholders
+- Financial reports for billing departments and insurance companies
+- Clinical reports for medical staff and patient care coordination
+- Administrative reports for management and regulatory compliance
+- Patient-specific reports for individualized care planning
+
+**Problem 2: Complex Data Aggregation**
+
+- Reports must combine data from multiple domain objects (Patients, Appointments, Bills)
+- Different report types require different data processing algorithms
+- Need to maintain data consistency across different report formats
+- Complex calculations involving financial, clinical, and operational metrics
+
+**Problem 3: Extensible Report Framework**
+
+- New report types frequently required for changing business needs
+- Regulatory requirements often demand new reporting formats
+- Must support custom report generation without modifying existing domain objects
+- Need to separate report generation logic from core business objects
+
+### Solution Approach
+
+The **Visitor Pattern** provides a flexible reporting framework where:
+
+- **Domain Objects** (PatientRecord, Appointment, MedicalBill) implement Visitable interface
+- **Report Visitors** encapsulate specific report generation algorithms
+- **Data Processing** is separated from domain object structure
+- **Extensibility** allows adding new report types without modifying existing code
+
+---
+
+## 2. Visitor Pattern Implementation
+
+### 2.1 Pattern Participants
+
+### Visitor Interface
+
+```java
+/**
+ * The Visitor interface. It declares a set of visiting methods for each
+ * concrete Visitable element.
+ */
+public interface ReportVisitor {
+    void visit(PatientRecord patient);
+    void visit(Appointment appointment);
+    void visit(MedicalBill bill);
+
+    // Method to retrieve the final generated report
+    String getReport();
+}
+
+```
+
+### Element Interface
+
+```java
+/**
+ * Defines the accept method that allows a visitor to perform an operation on an object.
+ * This is the "Element" interface in the Visitor pattern.
+ */
+public interface Visitable {
+    void accept(ReportVisitor visitor);
+}
+
+```
+
+### Concrete Elements
+
+**PatientRecord Implementation**
+
+```java
+public class PatientRecord implements Visitable {
+    private String patientId;
+    private String name;
+    private String medicalHistory;
+    private String treatmentPlans;
+    private InsurancePlan insurancePlan;
+
+    @Override
+    public void accept(ReportVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    // Getters and other methods...
+}
+
+```
+
+**Appointment Implementation**
+
+```java
+public class Appointment implements Visitable {
+    private int appointmentId;
+    private String patientId;
+    private String doctorId;
+    private LocalDateTime appointmentDateTime;
+    private String reason;
+    private String status;
+    private String doctorNotes;
+
+    @Override
+    public void accept(ReportVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    // Business methods and validation...
+}
+
+```
+
+**MedicalBill Implementation**
+
+```java
+public class MedicalBill implements Visitable {
+    private int billId;
+    private String patientId;
+    private String serviceDescription;
+    private double amount;
+    private double amountPaid;
+    private double insurancePaidAmount;
+    private String status;
+
+    @Override
+    public void accept(ReportVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    // Financial calculation methods...
+}
+
+```
+
+### 2.2 Concrete Visitor Implementations
+
+### Patient Summary Report Visitor
+
+```java
+/**
+ * Patient Summary Report Visitor - Fixed to match actual database schema
+ * Provides comprehensive overview of patient's healthcare and financial information
+ */
+public class PatientSummaryReportVisitor implements ReportVisitor {
+    private final StringBuilder reportContent = new StringBuilder();
+    private final List<Appointment> appointments = new ArrayList<>();
+    private final List<MedicalBill> bills = new ArrayList<>();
+    private final Map<String, Integer> serviceCount = new HashMap<>();
+    private final Map<String, Integer> doctorVisits = new HashMap<>();
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    private PatientRecord currentPatient;
+    private double totalBilled = 0;
+    private double totalCollected = 0;
+    private double totalOutstanding = 0;
+
+    @Override
+    public void visit(PatientRecord patient) {
+        this.currentPatient = patient;
+
+        reportContent.append(repeatString("=", 90)).append("\\n");
+        reportContent.append("    COMPREHENSIVE PATIENT SUMMARY REPORT\\n");
+        reportContent.append(repeatString("=", 90)).append("\\n");
+        reportContent.append("Patient: ").append(patient.getName())
+                .append(" (ID: ").append(patient.getPatientId()).append(")\\n");
+        reportContent.append(repeatString("=", 90)).append("\\n\\n");
+    }
+
+    @Override
+    public void visit(Appointment appointment) {
+        appointments.add(appointment);
+
+        // Track doctor visits
+        String doctorId = appointment.getDoctorId();
+        doctorVisits.put(doctorId, doctorVisits.getOrDefault(doctorId, 0) + 1);
+    }
+
+    @Override
+    public void visit(MedicalBill bill) {
+        bills.add(bill);
+        totalBilled += bill.getAmount();
+        totalCollected += bill.getTotalCollected();
+        totalOutstanding += bill.getRemainingBalance();
+
+        // Track service usage
+        String service = bill.getServiceDescription();
+        serviceCount.put(service, serviceCount.getOrDefault(service, 0) + 1);
+    }
+
+    @Override
+    public String getReport() {
+        generatePatientInformation();
+        generateHealthcareSummary();
+        generateFinancialSummary();
+        generateRecentActivity();
+        generateServiceUtilization();
+        generateDoctorRelationships();
+        generateHealthIndicators();
+        generateActionItems();
+        return reportContent.toString();
+    }
+
+    private void generatePatientInformation() {
+        reportContent.append("PATIENT INFORMATION\\n");
+        reportContent.append(repeatString("-", 50)).append("\\n");
+        reportContent.append("Name: ").append(currentPatient.getName()).append("\\n");
+        reportContent.append("Patient ID: ").append(currentPatient.getPatientId()).append("\\n");
+        reportContent.append("Medical History: ").append(currentPatient.getMedicalHistory()).append("\\n");
+        reportContent.append("Treatment Plans: ").append(currentPatient.getTreatmentPlans()).append("\\n");
+
+        if (currentPatient.getInsurancePlan() != null) {
+            reportContent.append("Insurance: ").append(currentPatient.getInsurancePlan().getPlanName())
+                    .append(" (").append(currentPatient.getInsurancePlan().getCoveragePercent()).append("% coverage)\\n");
+        }
+        reportContent.append("\\n");
+    }
+
+    private void generateHealthcareSummary() {
+        reportContent.append("HEALTHCARE SUMMARY\\n");
+        reportContent.append(repeatString("-", 50)).append("\\n");
+        reportContent.append("Total Appointments: ").append(appointments.size()).append("\\n");
+        reportContent.append("Total Services: ").append(bills.size()).append("\\n");
+        reportContent.append("Unique Doctors Seen: ").append(doctorVisits.size()).append("\\n");
+
+        // Healthcare engagement indicator
+        if (appointments.size() > 20) {
+            reportContent.append("Healthcare Engagement: 🔴 High utilization\\n");
+        } else if (appointments.size() > 10) {
+            reportContent.append("Healthcare Engagement: 🟡 Regular patient\\n");
+        } else if (appointments.size() > 3) {
+            reportContent.append("Healthcare Engagement: 🟢 Moderate usage\\n");
+        } else {
+            reportContent.append("Healthcare Engagement: ⚪ Limited interaction\\n");
+        }
+        reportContent.append("\\n");
+    }
+
+    private void generateFinancialSummary() {
+        reportContent.append("FINANCIAL SUMMARY\\n");
+        reportContent.append(repeatString("-", 50)).append("\\n");
+        reportContent.append(String.format("Total Billed: $%.2f\\n", totalBilled));
+        reportContent.append(String.format("Total Collected: $%.2f\\n", totalCollected));
+        reportContent.append(String.format("Outstanding Balance: $%.2f\\n", totalOutstanding));
+
+        if (totalBilled > 0) {
+            double collectionRate = (totalCollected / totalBilled) * 100;
+            reportContent.append(String.format("Collection Rate: %.1f%%\\n", collectionRate));
+        }
+        reportContent.append("\\n");
+    }
+
+    // Additional helper methods for report generation...
+    private String repeatString(String str, int count) {
+        return str.repeat(Math.max(0, count));
+    }
+}
+
+```
+
+### Financial Report Visitor
+
+```java
+/**
+ * Enhanced Financial Report Visitor - Fixed to match actual DB schema and MedicalBill class
+ */
+public class FinancialReportVisitor implements ReportVisitor {
+    private final StringBuilder reportContent = new StringBuilder();
+    private final List<MedicalBill> bills = new ArrayList<>();
+    private final Map<String, Double> serviceRevenue = new HashMap<>();
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    private String patientName = "";
+    private String patientId = "";
+    private double totalBilled = 0;
+    private double totalPatientPaid = 0;
+    private double totalInsurancePaid = 0;
+    private double totalOutstanding = 0;
+
+    @Override
+    public void visit(PatientRecord patient) {
+        this.patientName = patient.getName();
+        this.patientId = patient.getPatientId();
+
+        reportContent.append(repeatString("=", 80)).append("\\n");
+        reportContent.append("    INDIVIDUAL PATIENT FINANCIAL SUMMARY\\n");
+        reportContent.append(repeatString("=", 80)).append("\\n");
+        reportContent.append("Patient: ").append(patient.getName())
+                .append(" (ID: ").append(patient.getPatientId()).append(")\\n");
+        reportContent.append("Generated: ").append(LocalDate.now().format(dateFormatter)).append("\\n");
+        reportContent.append(repeatString("=", 80)).append("\\n\\n");
+    }
+
+    @Override
+    public void visit(Appointment appointment) {
+        // Could track appointment revenue correlation if needed
+    }
+
+    @Override
+    public void visit(MedicalBill bill) {
+        bills.add(bill);
+        totalBilled += bill.getAmount();
+        totalPatientPaid += bill.getAmountPaid();
+        totalInsurancePaid += bill.getInsurancePaidAmount();
+        totalOutstanding += bill.getRemainingBalance();
+
+        // Track revenue by service type
+        String service = bill.getServiceDescription();
+        serviceRevenue.put(service, serviceRevenue.getOrDefault(service, 0.0) + bill.getAmount());
+    }
+
+    @Override
+    public String getReport() {
+        generateFinancialOverview();
+        generatePaymentBreakdown();
+        generateServiceRevenue();
+        generatePaymentStatus();
+        generateRecommendations();
+        return reportContent.toString();
+    }
+
+    private void generateFinancialOverview() {
+        reportContent.append("FINANCIAL OVERVIEW\\n");
+        reportContent.append(repeatString("-", 50)).append("\\n");
+        reportContent.append(String.format("Total Amount Billed: $%,.2f\\n", totalBilled));
+        reportContent.append(String.format("Patient Payments: $%,.2f\\n", totalPatientPaid));
+        reportContent.append(String.format("Insurance Payments: $%,.2f\\n", totalInsurancePaid));
+        reportContent.append(String.format("Total Collected: $%,.2f\\n", totalPatientPaid + totalInsurancePaid));
+        reportContent.append(String.format("Outstanding Balance: $%,.2f\\n", totalOutstanding));
+        reportContent.append("\\n");
+    }
+
+    // Additional financial analysis methods...
+}
+
+```
+
+### Service Utilization Report Visitor
+
+```java
+/**
+ * Patient Service Utilization Visitor - Fixed to match actual database schema
+ * Analyzes patient's service usage patterns, appointments, and healthcare utilization
+ */
+public class PatientServiceUtilizationVisitor implements ReportVisitor {
+    private final StringBuilder reportContent = new StringBuilder();
+    private final Map<String, ServiceUtilization> serviceUsage = new HashMap<>();
+    private final Map<String, DoctorUtilization> doctorVisits = new HashMap<>();
+    private final List<Appointment> appointments = new ArrayList<>();
+    private final List<MedicalBill> bills = new ArrayList<>();
+
+    private String patientName = "";
+    private String patientId = "";
+    private double totalSpent = 0;
+    private double totalBilled = 0;
+    private int totalServices = 0;
+
+    @Override
+    public void visit(PatientRecord patient) {
+        this.patientName = patient.getName();
+        this.patientId = patient.getPatientId();
+
+        reportContent.append(repeatString("=", 90)).append("\\n");
+        reportContent.append("    PATIENT SERVICE UTILIZATION REPORT\\n");
+        reportContent.append(repeatString("=", 90)).append("\\n\\n");
+    }
+
+    @Override
+    public void visit(Appointment appointment) {
+        // Only process appointments for the current patient
+        if (appointment.getPatientId().equals(this.patientId)) {
+            appointments.add(appointment);
+
+            // Track doctor utilization
+            String doctorId = appointment.getDoctorId();
+            DoctorUtilization doctorUtil = doctorVisits.getOrDefault(doctorId,
+                    new DoctorUtilization(doctorId));
+            doctorUtil.addAppointment(appointment);
+            doctorVisits.put(doctorId, doctorUtil);
+        }
+    }
+
+    @Override
+    public void visit(MedicalBill bill) {
+        // Only process bills for the current patient
+        if (bill.getPatientId().equals(this.patientId)) {
+            bills.add(bill);
+            totalServices++;
+            totalBilled += bill.getAmount();
+            totalSpent += bill.getTotalCollected();
+
+            String serviceName = bill.getServiceDescription();
+            ServiceUtilization utilization = serviceUsage.getOrDefault(serviceName,
+                    new ServiceUtilization(serviceName));
+            utilization.addService(bill);
+            serviceUsage.put(serviceName, utilization);
+        }
+    }
+
+    @Override
+    public String getReport() {
+        generateUtilizationSummary();
+        generateAppointmentAnalysis();
+        generateServiceBreakdown();
+        generateDoctorUtilization();
+        generateUtilizationPatterns();
+        generateHealthcareValue();
+        generateRecommendations();
+        return reportContent.toString();
+    }
+
+    // Inner classes for data aggregation
+    private static class ServiceUtilization {
+        private final String serviceName;
+        private int usageCount = 0;
+        private double totalBilled = 0;
+        private double totalPaid = 0;
+        private double totalOutstanding = 0;
+
+        public ServiceUtilization(String serviceName) {
+            this.serviceName = serviceName;
+        }
+
+        public void addService(MedicalBill bill) {
+            usageCount++;
+            totalBilled += bill.getAmount();
+            totalPaid += bill.getTotalCollected();
+            totalOutstanding += bill.getRemainingBalance();
+        }
+
+        // Getters...
+    }
+
+    private static class DoctorUtilization {
+        private final String doctorId;
+        private final List<Appointment> appointments = new ArrayList<>();
+        private final Map<String, Integer> reasonCount = new HashMap<>();
+        private final Map<String, Integer> statusCount = new HashMap<>();
+
+        public DoctorUtilization(String doctorId) {
+            this.doctorId = doctorId;
+        }
+
+        public void addAppointment(Appointment appointment) {
+            appointments.add(appointment);
+
+            String reason = appointment.getReason();
+            if (reason != null && !reason.trim().isEmpty()) {
+                reasonCount.put(reason, reasonCount.getOrDefault(reason, 0) + 1);
+            }
+
+            String status = appointment.getStatus();
+            statusCount.put(status, statusCount.getOrDefault(status, 0) + 1);
+        }
+
+        // Getters and analysis methods...
+    }
+}
+
+```
+
+---
+
+## 3. UML Class Diagrams
+
+### 3.0 Comprehensive Diagram
+
+![Part E - Generating Medical Reports - Visitor.png](Part%20E%20Generating%20Medical%20Reports%20-%20Visitor%20Patter%2026026417036d8009b72fec3cd475fdf5/Part_E_-_Generating_Medical_Reports_-_Visitor.png)
+
+(You can find the High Res images in the Github Project Repo)
+
+### 3.1 Visitor Pattern Structure
+
+```
+┌─────────────────────────────────────┐
+│          <<interface>>              │
+│        ReportVisitor                │
+├─────────────────────────────────────┤
+│ + visit(patient: PatientRecord)     │
+│ + visit(appointment: Appointment)   │
+│ + visit(bill: MedicalBill)          │
+│ + getReport(): String               │
+└─────────────────────────────────────┘
+                    ▲
+        ┌───────────┼───────────┐
+        │           │           │
+┌───────────────┐ ┌─────────────┐ ┌──────────────────┐
+│PatientSummary │ │Financial    │ │ServiceUtilization│
+│ReportVisitor  │ │ReportVisitor│ │Visitor           │
+├───────────────┤ ├─────────────┤ ├──────────────────┤
+│- reportContent│ │- bills: List│ │- serviceUsage    │
+│- appointments │ │- totalBilled│ │- doctorVisits    │
+│- bills: List  │ │- totalPaid  │ │- appointments    │
+│- serviceCount │ └─────────────┘ └──────────────────┘
+│- doctorVisits │
+└───────────────┘
+
+┌─────────────────────────────────────┐
+│          <<interface>>              │
+│           Visitable                 │
+├─────────────────────────────────────┤
+│ + accept(visitor: ReportVisitor)    │
+└─────────────────────────────────────┘
+                    ▲
+        ┌───────────┼───────────┐
+        │           │           │
+┌───────────────┐ ┌─────────────┐ ┌──────────────┐
+│PatientRecord  │ │Appointment  │ │MedicalBill   │
+├───────────────┤ ├─────────────┤ ├──────────────┤
+│- patientId    │ │- appointmentId│ │- billId      │
+│- name         │ │- patientId  │ │- patientId   │
+│- medicalHist. │ │- doctorId   │ │- amount      │
+│- insurance    │ │- dateTime   │ │- amountPaid  │
+├───────────────┤ │- reason     │ │- status      │
+│+ accept()     │ │- status     │ ├──────────────┤
+└───────────────┘ ├─────────────┤ │+ accept()    │
+                  │+ accept()   │ │+ getTotalColl│
+                  └─────────────┘ │  ected()     │
+                                  └──────────────┘
+
+```
+
+### 3.2 Report Generation Flow
+
+```
+ReportController
+        │
+        ▼
+    generateReport(visitor)
+        │
+        ├─→ patient.accept(visitor) ─→ visitor.visit(patient)
+        │                                      │
+        ├─→ appointments.forEach(apt →         │
+        │     apt.accept(visitor)) ─→ visitor.visit(appointment)
+        │                                      │
+        └─→ bills.forEach(bill →               │
+              bill.accept(visitor)) ─→ visitor.visit(bill)
+                                               │
+                                               ▼
+                                     visitor.getReport()
+                                               │
+                                               ▼
+                                        Generated Report
+
+```
+
+---
+
+## 4. Detailed Code Analysis
+
+### 4.1 Report Controller Integration
+
+```java
+/**
+ * ReportController manages report generation workflow
+ * Demonstrates how the Visitor pattern integrates with the controller layer
+ */
+public class ReportController {
+    private final ReportPanel view;
+    private final BillingDAO billingDAO;
+    private final SchedulingDAO schedulingDAO;
+    private final PatientDAO patientDAO;
+    private final IUser currentUser;
+
+    private PatientRecord currentPatient;
+
+    private void generatePatientSpecificReport(ReportVisitor visitor) {
+        processPatientData(visitor);
+        processPatientAppointments(visitor);
+        processPatientBills(visitor);
+    }
+
+    private void processPatientData(ReportVisitor visitor) {
+        // Process patient data
+        currentPatient.accept(visitor);
+    }
+
+    private void processPatientAppointments(ReportVisitor visitor) {
+        // Get appointments for the patient
+        List<Appointment> appointments = schedulingDAO.getAppointmentsByPatientId(
+                currentPatient.getPatientId());
+        for (Appointment appointment : appointments) {
+            appointment.accept(visitor);
+        }
+    }
+
+    private void processPatientBills(ReportVisitor visitor) {
+        // Get bills for the patient within date range
+        List<MedicalBill> bills = getBillsForPatientWithFilters(currentPatient.getPatientId());
+        for (MedicalBill bill : bills) {
+            bill.accept(visitor);
+        }
+    }
+
+    private void generatePatientSummaryReport() {
+        if (currentPatient == null) {
+            showError("Please select a patient first.");
+            return;
+        }
+
+        PatientSummaryReportVisitor visitor = new PatientSummaryReportVisitor();
+        generatePatientSpecificReport(visitor);
+
+        String report = visitor.getReport();
+        view.displayReport(report);
+
+        JOptionPane.showMessageDialog(view,
+            "Patient Summary Report generated successfully!",
+            "Report Generated", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void generateFinancialReport() {
+        if (currentPatient == null) {
+            showError("Please select a patient first.");
+            return;
+        }
+
+        FinancialReportVisitor visitor = new FinancialReportVisitor();
+        generatePatientSpecificReport(visitor);
+
+        String report = visitor.getReport();
+        view.displayReport(report);
+
+        JOptionPane.showMessageDialog(view,
+            "Financial Report generated successfully!",
+            "Report Generated", JOptionPane.INFORMATION_MESSAGE);
+    }
+}
+
+```
+
+### 4.2 Complex Data Aggregation Examples
+
+### Patient Summary Report Data Processing
+
+```java
+public class PatientSummaryReportVisitor implements ReportVisitor {
+    @Override
+    public void visit(PatientRecord patient) {
+        this.currentPatient = patient;
+        // Initialize report header with patient information
+        generateReportHeader(patient);
+    }
+
+    @Override
+    public void visit(Appointment appointment) {
+        appointments.add(appointment);
+
+        // Track doctor-patient relationships
+        String doctorId = appointment.getDoctorId();
+        doctorVisits.put(doctorId, doctorVisits.getOrDefault(doctorId, 0) + 1);
+
+        // Analyze appointment patterns
+        analyzeAppointmentPatterns(appointment);
+    }
+
+    @Override
+    public void visit(MedicalBill bill) {
+        bills.add(bill);
+
+        // Financial aggregation
+        totalBilled += bill.getAmount();
+        totalCollected += bill.getTotalCollected();
+        totalOutstanding += bill.getRemainingBalance();
+
+        // Service utilization tracking
+        String service = bill.getServiceDescription();
+        serviceCount.put(service, serviceCount.getOrDefault(service, 0) + 1);
+
+        // Payment analysis
+        analyzePaymentPatterns(bill);
+    }
+
+    private void generateHealthIndicators() {
+        reportContent.append("HEALTH INDICATORS\\n");
+        reportContent.append(repeatString("-", 50)).append("\\n");
+
+        // Service diversity analysis
+        if (serviceCount.size() > 10) {
+            reportContent.append("Service Diversity: 🔴 High - complex healthcare needs\\n");
+        } else if (serviceCount.size() > 5) {
+            reportContent.append("Service Diversity: 🟡 Moderate - varied healthcare needs\\n");
+        } else {
+            reportContent.append("Service Diversity: 🟢 Focused - specific healthcare needs\\n");
+        }
+
+        // Appointment compliance calculation
+        long completedAppointments = appointments.stream()
+                .filter(apt -> "Completed".equalsIgnoreCase(apt.getStatus()) ||
+                              "Scheduled".equalsIgnoreCase(apt.getStatus()))
+                .count();
+
+        if (appointments.size() > 0) {
+            double complianceRate = (double) completedAppointments / appointments.size() * 100;
+            reportContent.append(String.format("Appointment Compliance: %.1f%%", complianceRate));
+
+            if (complianceRate >= 90) {
+                reportContent.append(" 🟢 Excellent\\n");
+            } else if (complianceRate >= 75) {
+                reportContent.append(" 🟡 Good\\n");
+            } else {
+                reportContent.append(" 🔴 Needs Improvement\\n");
+            }
+        }
+    }
+}
+
+```
+
+### Service Utilization Analysis
+
+```java
+public class PatientServiceUtilizationVisitor implements ReportVisitor {
+    @Override
+    public void visit(MedicalBill bill) {
+        if (bill.getPatientId().equals(this.patientId)) {
+            bills.add(bill);
+            totalServices++;
+            totalBilled += bill.getAmount();
+            totalSpent += bill.getTotalCollected();
+
+            // Track service utilization patterns
+            String serviceName = bill.getServiceDescription();
+            ServiceUtilization utilization = serviceUsage.getOrDefault(serviceName,
+                    new ServiceUtilization(serviceName));
+            utilization.addService(bill);
+            serviceUsage.put(serviceName, utilization);
+        }
+    }
+
+    private void generateServiceBreakdown() {
+        reportContent.append("SERVICE UTILIZATION BREAKDOWN\\n");
+        reportContent.append(repeatString("-", 60)).append("\\n");
+        reportContent.append(String.format("%-25s %8s %10s %10s %12s\\n",
+                "Service", "Count", "Billed", "Paid", "Outstanding"));
+        reportContent.append(repeatString("-", 60)).append("\\n");
+
+        serviceUsage.values().stream()
+                .sorted((a, b) -> Double.compare(b.getTotalBilled(), a.getTotalBilled()))
+                .forEach(service -> {
+                    reportContent.append(String.format("%-25s %8d $%9.2f $%9.2f $%11.2f\\n",
+                            truncateString(service.getServiceName(), 25),
+                            service.getUsageCount(),
+                            service.getTotalBilled(),
+                            service.getTotalPaid(),
+                            service.getTotalOutstanding()));
+                });
+        reportContent.append("\\n");
+    }
+
+    private void generateHealthcareValue() {
+        reportContent.append("HEALTHCARE VALUE ANALYSIS\\n");
+        reportContent.append(repeatString("-", 50)).append("\\n");
+
+        // Value indicators
+        if (appointments.size() > 10 && serviceUsage.size() > 5) {
+            reportContent.append("🟢 High healthcare engagement\\n");
+        } else if (appointments.size() > 5) {
+            reportContent.append("🟡 Regular healthcare usage\\n");
+        } else {
+            reportContent.append("🔴 Low healthcare utilization\\n");
+        }
+
+        // Cost efficiency analysis
+        double costPerAppointment = appointments.size() > 0 ? totalBilled / appointments.size() : 0;
+        if (costPerAppointment > 500) {
+            reportContent.append("Higher cost utilization pattern\\n");
+        } else if (costPerAppointment > 200) {
+            reportContent.append("Moderate cost utilization pattern\\n");
+        } else {
+            reportContent.append("Lower cost utilization pattern\\n");
+        }
+    }
+}
+
+```
+
+### 4.3 Multi-Domain Data Correlation
+
+```java
+/**
+ * Doctor Revenue Performance Visitor demonstrates complex multi-domain analysis
+ * Correlates appointment data with billing information for performance metrics
+ */
+public class DoctorRevenuePerformanceVisitor implements ReportVisitor {
+    @Override
+    public void visit(Appointment appointment) {
+        String doctorId = appointment.getDoctorId();
+        DoctorPerformance performance = doctorPerformance.getOrDefault(doctorId,
+                new DoctorPerformance(doctorId));
+        performance.addAppointment(appointment);
+        doctorPerformance.put(doctorId, performance);
+
+        totalAppointments++;
+
+        // Create mapping for later bill correlation
+        appointmentToBillMapping.put(appointment.getPatientId() + "_" +
+                appointment.getAppointmentDateTime().toLocalDate(), doctorId);
+    }
+
+    @Override
+    public void visit(MedicalBill bill) {
+        totalBills++;
+        totalSystemRevenue += bill.getAmount();
+        totalSystemCollected += bill.getTotalCollected();
+
+        // Find associated doctor through appointment correlation
+        String doctorId = findDoctorForBill(bill.getPatientId());
+
+        if (doctorId != null) {
+            DoctorPerformance performance = doctorPerformance.get(doctorId);
+            if (performance != null) {
+                performance.addRevenueBill(bill);
+            }
+        } else {
+            // Handle unassigned bills
+            DoctorPerformance unassigned = doctorPerformance.getOrDefault("UNASSIGNED",
+                    new DoctorPerformance("UNASSIGNED"));
+            unassigned.addRevenueBill(bill);
+            doctorPerformance.put("UNASSIGNED", unassigned);
+        }
+    }
+
+    private String findDoctorForBill(String patientId) {
+        // Logic to correlate bills with appointments based on patient and timing
+        return appointmentToBillMapping.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(patientId))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Enhanced DoctorPerformance class with comprehensive metrics
+    private static class DoctorPerformance {
+        private final String doctorId;
+        private final List<Appointment> appointments = new ArrayList<>();
+        private final List<MedicalBill> bills = new ArrayList<>();
+        private final Map<String, Integer> appointmentStatusBreakdown = new HashMap<>();
+
+        private double totalBilled = 0;
+        private double totalPatientPaid = 0;
+        private double totalInsurancePaid = 0;
+        private double totalCollected = 0;
+        private double totalOutstanding = 0;
+
+        public void addAppointment(Appointment appointment) {
+            appointments.add(appointment);
+            String status = appointment.getStatus();
+            appointmentStatusBreakdown.put(status,
+                    appointmentStatusBreakdown.getOrDefault(status, 0) + 1);
+        }
+
+        public void addRevenueBill(MedicalBill bill) {
+            bills.add(bill);
+            totalBilled += bill.getAmount();
+            totalPatientPaid += bill.getAmountPaid();
+            totalInsurancePaid += bill.getInsurancePaidAmount();
+            totalCollected = totalPatientPaid + totalInsurancePaid;
+            totalOutstanding += bill.getRemainingBalance();
+        }
+
+        // Performance calculation methods
+        public double getRevenuePerAppointment() {
+            return appointments.size() > 0 ? totalBilled / appointments.size() : 0;
+        }
+
+        public double getCollectionRate() {
+            return totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
+        }
+    }
+}
+
+```
+
+---
+
+## 5. Report Generation Workflows
+
+### 5.1 Patient-Specific Report Generation
+
+```java
+/**
+ * Complete workflow for generating patient-specific reports
+ */
+public void generatePatientReport(String reportType, String patientId) {
+    // Step 1: Retrieve patient data
+    PatientRecord patient = patientDAO.getPatientById(patientId);
+    if (patient == null) {
+        throw new IllegalArgumentException("Patient not found: " + patientId);
+    }
+
+    // Step 2: Create appropriate visitor
+    ReportVisitor visitor = createVisitor(reportType);
+
+    // Step 3: Process patient data
+    patient.accept(visitor);
+
+    // Step 4: Process related appointments
+    List<Appointment> appointments = schedulingDAO.getAppointmentsByPatientId(patientId);
+    appointments.forEach(appointment -> appointment.accept(visitor));
+
+    // Step 5: Process related bills
+    List<MedicalBill> bills = billingDAO.getBillsByPatientId(patientId);
+    bills.forEach(bill -> bill.accept(visitor));
+
+    // Step 6: Generate final report
+    String report = visitor.getReport();
+
+    // Step 7: Display or save report
+    displayReport(report, reportType);
+}
+
+private ReportVisitor createVisitor(String reportType) {
+    switch (reportType) {
+        case "PATIENT_SUMMARY":
+            return new PatientSummaryReportVisitor();
+        case "FINANCIAL":
+            return new FinancialReportVisitor();
+        case "SERVICE_UTILIZATION":
+            return new PatientServiceUtilizationVisitor();
+        case "PAYMENT_HISTORY":
+            return new PatientPaymentHistoryVisitor();
+        default:
+            throw new IllegalArgumentException("Unknown report type: " + reportType);
+    }
+}
+
+```
+
+### 5.2 System-Wide Report Generation
+
+```java
+/**
+ * Workflow for generating comprehensive system reports
+ */
+public void generateSystemWideReport(String reportType, LocalDate startDate, LocalDate endDate) {
+    ReportVisitor visitor = createSystemVisitor(reportType);
+
+    // Process all patients
+    List<PatientRecord> patients = patientDAO.getAllPatients();
+    patients.forEach(patient -> patient.accept(visitor));
+
+    // Process appointments within date range
+    List<Appointment> appointments = schedulingDAO.getAppointmentsByDateRange(startDate, endDate);
+    appointments.forEach(appointment -> appointment.accept(visitor));
+
+    // Process bills within date range
+    List<MedicalBill> bills = billingDAO.getBillsByDateRange(startDate, endDate);
+    bills.forEach(bill -> bill.accept(visitor));
+
+    // Generate comprehensive report
+    String report = visitor.getReport();
+    displayReport(report, reportType);
+}
+
+private ReportVisitor createSystemVisitor(String reportType) {
+    switch (reportType) {
+        case "COMPREHENSIVE_FINANCIAL":
+            return new ComprehensiveFinancialSummaryVisitor();
+        case "DOCTOR_PERFORMANCE":
+            return new DoctorRevenuePerformanceVisitor();
+        case "SYSTEM_UTILIZATION":
+            return new SystemUtilizationReportVisitor();
+        default:
+            throw new IllegalArgumentException("Unknown system report type: " + reportType);
+    }
+}
+
+```
+
+### 5.3 Conditional Report Processing
+
+```java
+/**
+ * Advanced report generation with conditional processing
+ */
+public class ConditionalReportVisitor implements ReportVisitor {
+    private final Predicate<PatientRecord> patientFilter;
+    private final Predicate<Appointment> appointmentFilter;
+    private final Predicate<MedicalBill> billFilter;
+
+    public ConditionalReportVisitor(Predicate<PatientRecord> patientFilter,
+                                   Predicate<Appointment> appointmentFilter,
+                                   Predicate<MedicalBill> billFilter) {
+        this.patientFilter = patientFilter;
+        this.appointmentFilter = appointmentFilter;
+        this.billFilter = billFilter;
+    }
+
+    @Override
+    public void visit(PatientRecord patient) {
+        if (patientFilter.test(patient)) {
+            // Process patient data
+            processPatientData(patient);
+        }
+    }
+
+    @Override
+    public void visit(Appointment appointment) {
+        if (appointmentFilter.test(appointment)) {
+            // Process appointment data
+            processAppointmentData(appointment);
+        }
+    }
+
+    @Override
+    public void visit(MedicalBill bill) {
+        if (billFilter.test(bill)) {
+            // Process bill data
+            processBillData(bill);
+        }
+    }
+
+    // Usage example:
+    public static ConditionalReportVisitor createHighValuePatientReport() {
+        return new ConditionalReportVisitor(
+            patient -> hasHighValueBilling(patient),
+            appointment -> appointment.getStatus().equals("Completed"),
+            bill -> bill.getAmount() > 1000.0
+        );
+    }
+}
+
+```
+
+---
+
+## 6. Usage Scenarios
+
+### 6.1 Scenario 1: Comprehensive Patient Summary
+
+```java
+// Generate complete patient summary for P001
+String patientId = "P001";
+PatientRecord patient = patientDAO.getPatientById(patientId);
+
+// Create visitor for comprehensive summary
+PatientSummaryReportVisitor visitor = new PatientSummaryReportVisitor();
+
+// Process patient information
+patient.accept(visitor);
+
+// Process all patient appointments
+List<Appointment> appointments = schedulingDAO.getAppointmentsByPatientId(patientId);
+appointments.forEach(appointment -> appointment.accept(visitor));
+
+// Process all patient bills
+List<MedicalBill> bills = billingDAO.getBillsByPatientId(patientId);
+bills.forEach(bill -> bill.accept(visitor));
+
+// Generate final report
+String report = visitor.getReport();
+
+// Expected report sections:
+// - Patient Information (demographics, insurance)
+// - Healthcare Summary (appointments, engagement level)
+// - Financial Summary (billing, payments, outstanding)
+// - Service Utilization (most used services)
+// - Doctor Relationships (frequency of visits)
+// - Health Indicators (compliance, service diversity)
+// - Action Items (recommendations)
+
+```
+
+### 6.2 Scenario 2: Financial Analysis Report
+
+```java
+// Generate detailed financial report for patient
+FinancialReportVisitor financialVisitor = new FinancialReportVisitor();
+
+// Process the same data through financial lens
+patient.accept(financialVisitor);
+appointments.forEach(appointment -> appointment.accept(financialVisitor));
+bills.forEach(bill -> bill.accept(financialVisitor));
+
+String financialReport = financialVisitor.getReport();
+
+// Expected financial analysis:
+// - Total amounts (billed, collected, outstanding)
+// - Payment breakdown (patient vs insurance)
+// - Service revenue analysis
+// - Payment status categorization
+// - Collection rate calculations
+// - Financial recommendations
+
+```
+
+### 6.3 Scenario 3: Multi-Patient Service Utilization
+
+```java
+// Analyze service utilization across multiple patients
+PatientServiceUtilizationVisitor utilizationVisitor = new PatientServiceUtilizationVisitor();
+
+List<String> patientIds = Arrays.asList("P001", "P002", "P003");
+
+for (String pid : patientIds) {
+    PatientRecord pt = patientDAO.getPatientById(pid);
+    pt.accept(utilizationVisitor);
+
+    // Process appointments and bills for each patient
+    schedulingDAO.getAppointmentsByPatientId(pid)
+            .forEach(apt -> apt.accept(utilizationVisitor));
+    billingDAO.getBillsByPatientId(pid)
+            .forEach(bill -> bill.accept(utilizationVisitor));
+}
+
+String utilizationReport = utilizationVisitor.getReport();
+
+// Expected utilization analysis:
+// - Service usage patterns per patient
+// - Doctor utilization metrics
+// - Cost per service analysis
+// - Healthcare value indicators
+// - Utilization recommendations
+
+```
+
+### 6.4 Scenario 4: Doctor Performance Analysis
+
+```java
+// Generate doctor performance report across all patients
+DoctorRevenuePerformanceVisitor performanceVisitor = new DoctorRevenuePerformanceVisitor();
+
+// Process all patients, appointments, and bills
+List<PatientRecord> allPatients = patientDAO.getAllPatients();
+allPatients.forEach(patient -> patient.accept(performanceVisitor));
+
+List<Appointment> allAppointments = schedulingDAO.getAllAppointments();
+allAppointments.forEach(appointment -> appointment.accept(performanceVisitor));
+
+List<MedicalBill> allBills = billingDAO.getAllBills();
+allBills.forEach(bill -> bill.accept(performanceVisitor));
+
+String performanceReport = performanceVisitor.getReport();
+
+// Expected performance metrics:
+// - Revenue per doctor
+// - Appointment volume by doctor
+// - Collection rates by doctor
+// - Patient load analysis
+// - Performance rankings
+// - Revenue efficiency metrics
+
+```
+
+---
+
+## 7. Benefits & Trade-offs
+
+### 7.1 Visitor Pattern Benefits
+
+**Separation of Concerns**
+
+- Report generation logic completely separated from domain objects
+- Domain objects remain focused on core business functionality
+- Different report types can be developed independently
+- Easy to modify report algorithms without affecting domain model
+
+**Extensibility**
+
+- New report types can be added without modifying existing domain classes
+- Complex analytical reports can be implemented as new visitors
+- Regulatory reporting requirements easily accommodated
+- Custom reports for different stakeholders simple to implement
+
+**Code Reusability**
+
+- Same domain objects can be processed by multiple report visitors
+- Common report utilities can be shared across visitor implementations
+- Data aggregation patterns can be reused in different report contexts
+- Report generation workflows are consistent and reusable
+
+**Type Safety**
+
+- Compile-time checking ensures all visitable types are handled
+- Method overloading provides type-specific processing logic
+- No need for runtime type checking or casting
+- Clear contracts between visitors and domain objects
+
+### 7.2 Healthcare Domain Specific Benefits
+
+**Regulatory Compliance**
+
+- Easy to implement new reporting requirements for changing regulations
+- Audit trail capabilities built into report generation process
+- Standardized report formats for regulatory submissions
+- Historical reporting capabilities for compliance verification
+
+**Multi-Stakeholder Support**
+
+- Different report views for clinical staff, administrators, and patients
+- Financial reports for billing departments and insurance companies
+- Clinical reports for care coordination and quality improvement
+- Administrative reports for operational management
+
+**Data Consistency**
+
+- Reports always based on current domain object state
+- No data duplication between report storage and operational data
+- Real-time report generation ensures data accuracy
+- Consistent calculations across different report types
+
+**Performance Optimization**
+
+- Reports generated on-demand without pre-computation overhead
+- Efficient data traversal patterns for large datasets
+- Memory-efficient processing through visitor callbacks
+- Scalable approach for enterprise healthcare systems
+
+### 7.3 Trade-offs and Considerations
+
+**Complexity Management**
+
+- Large number of visitor classes for comprehensive reporting
+- Complex interactions between different visitor implementations
+- Need for careful design to avoid visitor explosion
+- Testing complexity increases with number of visitors
+
+**Performance Considerations**
+
+- Method dispatch overhead through visitor interface
+- Memory usage can grow with complex report data structures
+- Large datasets may require streaming or pagination approaches
+- Report generation time scales with data volume
+
+**Maintenance Overhead**
+
+- Adding new domain object types requires updating all visitors
+- Interface changes affect all visitor implementations
+- Version compatibility issues between visitors and domain objects
+- Documentation critical for understanding visitor relationships
+
+**Learning Curve**
+
+- Visitor pattern can be difficult for developers to understand initially
+- Complex report logic may be harder to debug across multiple methods
+- Requires good understanding of double dispatch mechanism
+- Testing strategies need to account for visitor pattern structure
+
+---
+
+## 8. Testing & Validation
+
+### 8.1 Unit Testing Individual Visitors
+
+```java
+@Test
+public void testPatientSummaryReportVisitor() {
+    // Arrange
+    PatientSummaryReportVisitor visitor = new PatientSummaryReportVisitor();
+
+    PatientRecord patient = new PatientRecord("P001", "John Doe");
+    patient.setMedicalHistory("Diabetes, Hypertension");
+
+    Appointment appointment = new Appointment("P001", "D001",
+            LocalDateTime.now(), "Regular checkup");
+    appointment.setStatus("Completed");
+
+    MedicalBill bill = new MedicalBill("P001", "Consultation", 150.00);
+    bill.setAmountPaid(30.00);
+    bill.setInsurancePaidAmount(120.00);
+
+    // Act
+    patient.accept(visitor);
+    appointment.accept(visitor);
+    bill.accept(visitor);
+
+    String report = visitor.getReport();
+
+    // Assert
+    assertNotNull(report);
+    assertTrue(report.contains("John Doe"));
+    assertTrue(report.contains("P001"));
+    assertTrue(report.contains("Total Appointments: 1"));
+    assertTrue(report.contains("Total Billed: $150.00"));
+    assertTrue(report.contains("Total Collected: $150.00"));
+    assertTrue(report.contains("Outstanding Balance: $0.00"));
+}
+
+@Test
+public void testFinancialReportVisitor() {
+    // Arrange
+    FinancialReportVisitor visitor = new FinancialReportVisitor();
+
+    PatientRecord patient = new PatientRecord("P002", "Jane Smith");
+
+    MedicalBill bill1 = new MedicalBill("P002", "Surgery", 5000.00);
+    bill1.setAmountPaid(1000.00);
+    bill1.setInsurancePaidAmount(3000.00);
+
+    MedicalBill bill2 = new MedicalBill("P002", "Follow-up", 200.00);
+    bill2.setAmountPaid(50.00);
+    bill2.setInsurancePaidAmount(150.00);
+
+    // Act
+    patient.accept(visitor);
+    bill1.accept(visitor);
+    bill2.accept(visitor);
+
+    String report = visitor.getReport();
+
+    // Assert
+    assertTrue(report.contains("Total Amount Billed: $5,200.00"));
+    assertTrue(report.contains("Patient Payments: $1,050.00"));
+    assertTrue(report.contains("Insurance Payments: $3,150.00"));
+    assertTrue(report.contains("Total Collected: $4,200.00"));
+}
+
+@Test
+public void testServiceUtilizationVisitor() {
+    // Arrange
+    PatientServiceUtilizationVisitor visitor = new PatientServiceUtilizationVisitor();
+
+    PatientRecord patient = new PatientRecord("P003", "Bob Wilson");
+
+    // Multiple appointments with same doctor
+    Appointment apt1 = new Appointment("P003", "D001", LocalDateTime.now(), "Checkup");
+    Appointment apt2 = new Appointment("P003", "D001", LocalDateTime.now().plusWeeks(2), "Follow-up");
+
+    // Multiple services
+    MedicalBill bill1 = new MedicalBill("P003", "Consultation", 150.00);
+    MedicalBill bill2 = new MedicalBill("P003", "Consultation", 150.00);
+    MedicalBill bill3 = new MedicalBill("P003", "Lab Test", 75.00);
+
+    // Act
+    patient.accept(visitor);
+    apt1.accept(visitor);
+    apt2.accept(visitor);
+    bill1.accept(visitor);
+    bill2.accept(visitor);
+    bill3.accept(visitor);
+
+    String report = visitor.getReport();
+
+    // Assert
+    assertTrue(report.contains("Total Services: 3"));
+    assertTrue(report.contains("Consultation")); // Most used service
+    assertTrue(report.contains("D001")); // Doctor utilization
+    assertTrue(report.contains("Total Billed: $375.00"));
+}
+
+```
+
+### 8.2 Integration Testing with Multiple Visitors
+
+```java
+@Test
+public void testMultipleVisitorsOnSameData() {
+    // Arrange - Common test data
+    PatientRecord patient = createTestPatient();
+    List<Appointment> appointments = createTestAppointments();
+    List<MedicalBill> bills = createTestBills();
+
+    // Create different visitors
+    PatientSummaryReportVisitor summaryVisitor = new PatientSummaryReportVisitor();
+    FinancialReportVisitor financialVisitor = new FinancialReportVisitor();
+    PatientServiceUtilizationVisitor utilizationVisitor = new PatientServiceUtilizationVisitor();
+
+    // Act - Process same data with different visitors
+    List<ReportVisitor> visitors = Arrays.asList(
+            summaryVisitor, financialVisitor, utilizationVisitor);
+
+    visitors.forEach(visitor -> {
+        patient.accept(visitor);
+        appointments.forEach(apt -> apt.accept(visitor));
+        bills.forEach(bill -> bill.accept(visitor));
+    });
+
+    // Assert - Different reports generated from same data
+    String summaryReport = summaryVisitor.getReport();
+    String financialReport = financialVisitor.getReport();
+    String utilizationReport = utilizationVisitor.getReport();
+
+    assertNotEquals(summaryReport, financialReport);
+    assertNotEquals(financialReport, utilizationReport);
+
+    // Verify each report contains appropriate content
+    assertTrue(summaryReport.contains("COMPREHENSIVE PATIENT SUMMARY"));
+    assertTrue(financialReport.contains("FINANCIAL SUMMARY"));
+    assertTrue(utilizationReport.contains("SERVICE UTILIZATION"));
+}
+
+```
+
+### 8.3 Performance Testing
+
+```java
+@Test
+public void testLargeDatasetReportGeneration() {
+    // Arrange - Large dataset
+    List<PatientRecord> patients = createTestPatients(1000);
+    List<Appointment> appointments = createTestAppointments(5000);
+    List<MedicalBill> bills = createTestBills(3000);
+
+    PatientSummaryReportVisitor visitor = new PatientSummaryReportVisitor();
+
+    // Act - Measure performance
+    long startTime = System.currentTimeMillis();
+
+    patients.forEach(patient -> patient.accept(visitor));
+    appointments.forEach(appointment -> appointment.accept(visitor));
+    bills.forEach(bill -> bill.accept(visitor));
+
+    String report = visitor.getReport();
+
+    long endTime = System.currentTimeMillis();
+    long duration = endTime - startTime;
+
+    // Assert - Performance within acceptable limits
+    assertTrue("Report generation should complete within 5 seconds",
+               duration < 5000);
+    assertNotNull(report);
+    assertTrue("Report should contain substantial content",
+               report.length() > 1000);
+}
+
+@Test
+public void testMemoryUsageWithLargeReports() {
+    // Test memory efficiency of visitor pattern
+    Runtime runtime = Runtime.getRuntime();
+    long initialMemory = runtime.totalMemory() - runtime.freeMemory();
+
+    // Generate large report
+    generateLargeReport();
+
+    long finalMemory = runtime.totalMemory() - runtime.freeMemory();
+    long memoryUsed = finalMemory - initialMemory;
+
+    // Assert memory usage is reasonable
+    assertTrue("Memory usage should be under 100MB",
+               memoryUsed < 100 * 1024 * 1024);
+}
+
+```
+
+### 8.4 Error Handling Testing
+
+```java
+@Test
+public void testVisitorWithNullData() {
+    PatientSummaryReportVisitor visitor = new PatientSummaryReportVisitor();
+
+    // Test null patient
+    assertThrows(NullPointerException.class, () -> {
+        PatientRecord nullPatient = null;
+        nullPatient.accept(visitor);
+    });
+
+    // Test patient with null fields
+    PatientRecord incompletePatient = new PatientRecord(null, "Test Name");
+    assertDoesNotThrow(() -> {
+        incompletePatient.accept(visitor);
+        String report = visitor.getReport();
+        assertNotNull(report);
+    });
+}
+
+@Test
+public void testVisitorWithInvalidData() {
+    FinancialReportVisitor visitor = new FinancialReportVisitor();
+
+    // Test bill with negative amounts
+    MedicalBill invalidBill = new MedicalBill("P001", "Test Service", -100.00);
+
+    assertDoesNotThrow(() -> {
+        invalidBill.accept(visitor);
+        String report = visitor.getReport();
+        // Verify report handles invalid data gracefully
+        assertNotNull(report);
+    });
+}
+
+```
+
+---
+
+## 9. Conclusion
+
+The Visitor pattern implementation for medical reports generation demonstrates a sophisticated approach to handling diverse reporting requirements in healthcare systems. The pattern successfully addresses the complex challenges of multi-domain data aggregation while maintaining clean separation between report generation logic and core business objects.
+
+### Key Achievements
+
+1. **Flexible Report Framework**: Successfully implements a comprehensive reporting system that can generate diverse report types from the same underlying data
+2. **Domain Separation**: Clean separation between business logic and reporting concerns, allowing independent evolution of both
+3. **Extensible Architecture**: Easy addition of new report types without modifying existing domain objects or other reports
+4. **Complex Data Analysis**: Sophisticated data aggregation and correlation across multiple domain objects (patients, appointments, bills)
+5. **Performance Scalability**: Efficient processing of large datasets through visitor callbacks and streaming approaches
+
+### Real-World Healthcare Impact
+
+The Visitor pattern proves particularly valuable in healthcare reporting contexts where:
+
+- **Regulatory Compliance** requires diverse reporting formats for different regulatory bodies and timeframes
+- **Multi-Stakeholder Needs** demand different views of the same data for clinical staff, administrators, patients, and insurance companies
+- **Clinical Decision Support** benefits from comprehensive patient summaries and utilization analysis
+- **Financial Management** requires detailed billing analysis and revenue performance tracking
+- **Quality Improvement** needs service utilization patterns and patient engagement metrics
+
+### Pattern Benefits Realized
+
+The implementation successfully demonstrates how the Visitor pattern can:
+
+- **Enable** complex analytical processing without cluttering domain objects with reporting logic
+- **Support** real-time report generation from current operational data without data duplication
+- **Facilitate** consistent data interpretation across different report types and stakeholders
+- **Provide** type-safe report processing with compile-time verification of visitor completeness
+- **Maintain** high performance even with large datasets through efficient visitor traversal patterns
+
+### Technical Excellence
+
+The visitor implementation showcases several advanced techniques:
+
+- **Double Dispatch** mechanism for type-specific processing
+- **Data Correlation** across multiple domain boundaries for comprehensive analysis
+- **Conditional Processing** for filtered and targeted report generation
+- **Memory Efficiency** through streaming visitor patterns for large datasets
+- **Error Resilience** with graceful handling of incomplete or invalid data
+
+The medical reports generation system provides a robust foundation for healthcare analytics while maintaining the flexibility needed for evolving reporting requirements in dynamic healthcare environments.
+
+---
+
+**Document Status**: Part E Complete
+
+**Next**: Part F - Security Considerations - Decorator, DAO
