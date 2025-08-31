@@ -29,9 +29,10 @@ module.exports = {
   search: true,
   prevLinks: true,
   nextLinks: true,
-  footer: true,
-  footerEditLink: "Edit this page on GitHub",
-  footerText: <>MIT {new Date().getFullYear()} © GlobeMed Healthcare Management System Documentation.</>,
+  footer: {
+    text: <>© 2025 Ishara Lakshitha. All rights reserved.</>,
+    component: null
+  },
   unstable_faviconGlyph: "🏥",
   sidebar: {
     titleComponent: ({ title, type }) => {
@@ -41,16 +42,18 @@ module.exports = {
       return <>{title}</>
     }
   },
-  toc: {
-    extraContent: (
-      <div className="mt-8 text-xs text-gray-500">
-        <p>💡 <strong>Tip:</strong> Use Ctrl+K to search</p>
-      </div>
-    )
-  },
-  editLink: {
-    text: "Edit this page on GitHub →"
-  },
+  // Temporarily disabled as this feature is not working correctly
+  // toc: {
+  //   extraContent: (
+  //     <div className="mt-8 text-xs text-gray-500">
+  //       <p>💡 <strong>Tip:</strong> Use Ctrl+K to search</p>
+  //     </div>
+  //   )
+  // },
+  // Temporarily disabled as this feature is not working correctly
+  // editLink: {
+  //   text: "Edit this page on GitHub →"
+  // },
   feedback: {
     content: "Question? Give us feedback →",
     labels: "feedback"
