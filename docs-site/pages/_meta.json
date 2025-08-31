@@ -1,0 +1,14 @@
+{
+  "index": "Introduction",
+  "overview": "System Overview",
+  "---": {
+    "type": "separator",
+    "title": "Design Pattern Implementations"
+  },
+  "patient-records": "Patient Record Management",
+  "appointment-scheduling": "Appointment Scheduling",
+  "billing-insurance": "Billing & Insurance Claims",
+  "staff-permissions": "Staff Roles & Permissions",
+  "medical-reports": "Medical Reports Generation",
+  "security": "Security Considerations"
+}
