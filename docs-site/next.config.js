@@ -5,6 +5,7 @@ const withNextra = require('nextra')({
 
 module.exports = withNextra({
   output: 'export',
+  basePath: '/GlobeMed-Healthcare-Management-System-Docs',
   images: {
     unoptimized: true
   },

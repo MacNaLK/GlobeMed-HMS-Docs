@@ -21,9 +21,9 @@ module.exports = {
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="og:title" content="GlobeMed Healthcare Management System Documentation" />
       <meta name="apple-mobile-web-app-title" content="GlobeMed HMS Docs" />
-      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+      <link rel="icon" type="image/svg+xml" href="/GlobeMed-Healthcare-Management-System-Docs/favicon.svg" />
+      <link rel="icon" type="image/png" sizes="32x32" href="/GlobeMed-Healthcare-Management-System-Docs/favicon-32x32.png" />
+      <link rel="icon" type="image/png" sizes="16x16" href="/GlobeMed-Healthcare-Management-System-Docs/favicon-16x16.png" />
     </>
   ),
   search: true,
