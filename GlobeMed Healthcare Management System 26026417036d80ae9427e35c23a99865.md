@@ -338,7 +338,7 @@ mvn exec:java -Dexec.mainClass="com.globemed.Main"
 
 ## **9. User Interface (UI) Screenshots**
 
-Please check the published doc to see the UI screenshots doc
+Please check the [published doc](https://macna.gitbook.io/macna.lk/globemed-hms-docs/foundation-and-overview#id-9.-user-interface-ui-screenshots) to see the UI screenshots.
 
 ---
 
