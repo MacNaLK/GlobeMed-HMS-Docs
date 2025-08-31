@@ -4,26 +4,17 @@
 
 **Project Name**: GlobeMed Healthcare Management System
 
-**Repository**: isharax9/healthcare-system
+**Repository**: isharax9/healthcare-system | [https://github.com/isharax9/healthcare-system](https://github.com/isharax9/healthcare-system)
 
-**Documentation Date**: 2025-08-29 04:42:57 UTC
+Published Doc: [https://macna.gitbook.io/macna.lk/globemed-hms-docs](https://macna.gitbook.io/macna.lk/globemed-hms-docs)
 
-**Author**: isharax9
+**Author**: Ishara Lakshitha
 
 **Purpose**: Academic/Educational - Design Patterns Implementation
 
 ---
 
-## Table of Contents
-
-1. [Project Introduction](https://www.notion.so/GlobeMed-Healthcare-Management-System-26026417036d80ae9427e35c23a99865?pvs=21)
-2. [System Objectives](https://www.notion.so/GlobeMed-Healthcare-Management-System-26026417036d80ae9427e35c23a99865?pvs=21)
-3. [Technology Stack](https://www.notion.so/GlobeMed-Healthcare-Management-System-26026417036d80ae9427e35c23a99865?pvs=21)
-4. [Architecture Overview](https://www.notion.so/GlobeMed-Healthcare-Management-System-26026417036d80ae9427e35c23a99865?pvs=21)
-5. [System Requirements](https://www.notion.so/GlobeMed-Healthcare-Management-System-26026417036d80ae9427e35c23a99865?pvs=21)
-6. [Project Structure](https://www.notion.so/GlobeMed-Healthcare-Management-System-26026417036d80ae9427e35c23a99865?pvs=21)
-7. [Core Application Modules & Design Patterns](https://www.notion.so/GlobeMed-Healthcare-Management-System-26026417036d80ae9427e35c23a99865?pvs=21)
-8. [Getting Started](https://www.notion.so/GlobeMed-Healthcare-Management-System-26026417036d80ae9427e35c23a99865?pvs=21)
+## Table Of Content
 
 ---
 
@@ -104,9 +95,414 @@ The GlobeMed Healthcare Management System is a comprehensive Java-based desktop 
 
 ## 4. Architecture Overview
 
+### Entity-Relationship Diagram (EER)
+
+![EER.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/EER.png)
+
 ### Complete Application UML Class Diagram
 
-[img here]
+```mermaid
+classDiagram
+    %% Main Application Classes
+    class Main {
+        -AuthService authService
+        -MainFrame mainFrame
+        +main(String[] args)
+        +startApp()
+        +restart()
+    }
+
+    %% Part A: Patient Record Management (Memento + Prototype Patterns)
+    class PatientRecord {
+        -String patientId
+        -String name
+        -List~String~ medicalHistory
+        -List~String~ treatmentPlans
+        -InsurancePlan insurancePlan
+        +save() PatientRecordMemento
+        +restore(PatientRecordMemento memento)
+        +clone() PatientRecord
+        +getPatientId() String
+        +getName() String
+        +getMedicalHistory() List~String~
+        +getTreatmentPlans() List~String~
+        +getInsurancePlan() InsurancePlan
+    }
+
+    class PatientRecordMemento {
+        -String name
+        -List~String~ medicalHistory
+        -List~String~ treatmentPlans
+        +getName() String
+        +getMedicalHistory() List~String~
+        +getTreatmentPlans() List~String~
+    }
+
+    class RecordHistory {
+        -Stack~PatientRecordMemento~ history
+        -PatientRecord patientRecord
+        +save()
+        +undo()
+    }
+
+    %% Part B: Appointment Scheduling (Mediator Pattern)
+    class AppointmentMediator {
+        <<interface>>
+        +scheduleAppointment(String patientId, String doctorId, LocalDateTime dateTime, String reason) boolean
+        +cancelAppointment(int appointmentId) boolean
+        +checkConflicts(String doctorId, LocalDateTime dateTime) boolean
+    }
+
+    class AppointmentScheduler {
+        -List~Appointment~ appointments
+        -PatientDAO patientDAO
+        -DoctorDAO doctorDAO
+        +scheduleAppointment(String patientId, String doctorId, LocalDateTime dateTime, String reason) boolean
+        +cancelAppointment(int appointmentId) boolean
+        +checkConflicts(String doctorId, LocalDateTime dateTime) boolean
+        +getAllAppointments() List~Appointment~
+    }
+
+    class Appointment {
+        -int appointmentId
+        -String patientId
+        -String doctorId
+        -LocalDateTime appointmentDateTime
+        -String reason
+        -String status
+        -String doctorNotes
+        -LocalDateTime lastUpdated
+        -String lastUpdatedBy
+        +accept(ReportVisitor visitor)
+    }
+
+    %% Part C: Billing and Insurance Claims (Chain of Responsibility Pattern)
+    class BillingHandler {
+        <<interface>>
+        +setNext(BillingHandler next)
+        +processBill(BillProcessingRequest request) boolean
+    }
+
+    class ValidationHandler {
+        -BillingHandler next
+        +setNext(BillingHandler next)
+        +processBill(BillProcessingRequest request) boolean
+    }
+
+    class InsuranceHandler {
+        -BillingHandler next
+        +setNext(BillingHandler next)
+        +processBill(BillProcessingRequest request) boolean
+    }
+
+    class PaymentHandler {
+        -BillingHandler next
+        +setNext(BillingHandler next)
+        +processBill(BillProcessingRequest request) boolean
+    }
+
+    class MedicalBill {
+        -int billId
+        -String patientId
+        -double amount
+        -String status
+        -List~String~ logs
+        -InsurancePlan appliedInsurancePlan
+        -double insurancePayment
+        +applyInsurancePayment(double amount)
+        +addLog(String log)
+        +setStatus(String status)
+        +accept(ReportVisitor visitor)
+    }
+
+    class BillProcessingRequest {
+        -MedicalBill bill
+        -PatientRecord patient
+        +getBill() MedicalBill
+        +getPatient() PatientRecord
+    }
+
+    %% Part D: Staff Roles and Permissions (Decorator Pattern)
+    class IUser {
+        <<interface>>
+        +getUsername() String
+        +getRole() String
+        +getDoctorId() String
+        +hasPermission(String permission) boolean
+    }
+
+    class BaseUser {
+        -String username
+        -String role
+        -String doctorId
+        +getUsername() String
+        +getRole() String
+        +getDoctorId() String
+        +hasPermission(String permission) boolean
+    }
+
+    class UserDecorator {
+        <<abstract>>
+        -IUser user
+        +getUsername() String
+        +getRole() String
+        +getDoctorId() String
+        +hasPermission(String permission) boolean
+    }
+
+    class AdminPermissionDecorator {
+        +hasPermission(String permission) boolean
+    }
+
+    class DoctorPermissionDecorator {
+        +hasPermission(String permission) boolean
+    }
+
+    class NursePermissionDecorator {
+        +hasPermission(String permission) boolean
+    }
+
+    class AuthService {
+        -Map~String,IUser~ users
+        +authenticate(String username, String password) IUser
+        +registerUser(String username, String password, String role, String doctorId)
+    }
+
+    %% Part E: Medical Reports (Visitor Pattern)
+    class ReportVisitor {
+        <<interface>>
+        +visitPatient(PatientRecord patient)
+        +visitAppointment(Appointment appointment)
+        +visitBill(MedicalBill bill)
+    }
+
+    class Visitable {
+        <<interface>>
+        +accept(ReportVisitor visitor)
+    }
+
+    class PatientSummaryVisitor {
+        -StringBuilder report
+        +visitPatient(PatientRecord patient)
+        +visitAppointment(Appointment appointment)
+        +visitBill(MedicalBill bill)
+        +getReport() String
+    }
+
+    class FinancialReportVisitor {
+        -double totalRevenue
+        -double totalInsuranceClaims
+        -StringBuilder report
+        +visitPatient(PatientRecord patient)
+        +visitAppointment(Appointment appointment)
+        +visitBill(MedicalBill bill)
+        +getReport() String
+    }
+
+    %% Insurance System
+    class InsurancePlan {
+        -int planId
+        -String planName
+        -double coveragePercent
+        +getPlanId() int
+        +getPlanName() String
+        +getCoveragePercent() double
+    }
+
+    %% Data Access Layer
+    class PatientDAO {
+        +getAllPatients() List~PatientRecord~
+        +getPatientById(String id) PatientRecord
+        +savePatient(PatientRecord patient)
+        +updatePatient(PatientRecord patient)
+        +deletePatient(String id)
+    }
+
+    class AppointmentDAO {
+        +getAllAppointments() List~Appointment~
+        +getAppointmentById(int id) Appointment
+        +saveAppointment(Appointment appointment)
+        +updateAppointment(Appointment appointment)
+        +deleteAppointment(int id)
+    }
+
+    class InsuranceDAO {
+        +getAllPlans() List~InsurancePlan~
+    }
+
+    class DatabaseManager {
+        -String JDBC_URL
+        -String USERNAME
+        -String PASSWORD
+        -Connection connection
+        +getConnection() Connection
+        +closeConnection()
+    }
+
+    %% UI Layer
+    class MainFrame {
+        -IUser currentUser
+        -Main appInstance
+        -JTabbedPane tabbedPane
+        +createMenuBar()
+        +toggleDarkMode()
+        +logout()
+    }
+
+    class LoginDialog {
+        -AuthService authService
+        -IUser authenticatedUser
+        +getAuthenticatedUser() IUser
+    }
+
+    class PatientPanel {
+        -JTable patientTable
+        -JButton addButton
+        -JButton editButton
+        -JButton deleteButton
+    }
+
+    class AppointmentPanel {
+        -JTable appointmentTable
+        -JButton scheduleButton
+        -JButton cancelButton
+    }
+
+    class BillingPanel {
+        -JTable billTable
+        -JButton createBillButton
+        -JButton processBillButton
+    }
+
+    class ReportPanel {
+        -JComboBox reportTypeCombo
+        -JButton generateButton
+        -JTextArea reportArea
+    }
+
+    class StaffPanel {
+        -JTable staffTable
+        -JButton addStaffButton
+        -JButton editStaffButton
+    }
+
+    %% Controllers (MVC Pattern)
+    class PatientController {
+        -PatientPanel view
+        -PatientDAO dao
+        -MainFrame parent
+        -IUser currentUser
+        +handleAddPatient()
+        +handleEditPatient()
+        +handleDeletePatient()
+    }
+
+    class AppointmentController {
+        -AppointmentPanel view
+        -AppointmentScheduler scheduler
+        -MainFrame parent
+        -IUser currentUser
+        +handleScheduleAppointment()
+        +handleCancelAppointment()
+    }
+
+    class BillingController {
+        -BillingPanel view
+        -BillingHandler billingChain
+        -MainFrame parent
+        -IUser currentUser
+        +handleCreateBill()
+        +handleProcessBill()
+    }
+
+    class ReportController {
+        -ReportPanel view
+        -MainFrame parent
+        -IUser currentUser
+        +handleGenerateReport()
+    }
+
+    class StaffController {
+        -StaffPanel view
+        -AuthService authService
+        -MainFrame parent
+        -IUser currentUser
+        +handleAddStaff()
+        +handleEditStaff()
+    }
+
+    %% Relationships
+
+    %% Main Application
+    Main --> AuthService
+    Main --> MainFrame
+    MainFrame --> IUser
+    MainFrame --> PatientPanel
+    MainFrame --> AppointmentPanel
+    MainFrame --> BillingPanel
+    MainFrame --> ReportPanel
+    MainFrame --> StaffPanel
+
+    %% Memento Pattern (Part A)
+    PatientRecord --> PatientRecordMemento : creates
+    RecordHistory --> PatientRecordMemento : stores
+    RecordHistory --> PatientRecord : manages
+
+    %% Mediator Pattern (Part B)
+    AppointmentScheduler ..|> AppointmentMediator
+    AppointmentScheduler --> Appointment : manages
+    Appointment ..|> Visitable
+
+    %% Chain of Responsibility Pattern (Part C)
+    ValidationHandler ..|> BillingHandler
+    InsuranceHandler ..|> BillingHandler
+    PaymentHandler ..|> BillingHandler
+    ValidationHandler --> InsuranceHandler : next
+    InsuranceHandler --> PaymentHandler : next
+    BillingHandler --> BillProcessingRequest : processes
+    BillProcessingRequest --> MedicalBill
+    BillProcessingRequest --> PatientRecord
+    MedicalBill ..|> Visitable
+
+    %% Decorator Pattern (Part D)
+    BaseUser ..|> IUser
+    UserDecorator ..|> IUser
+    UserDecorator --> IUser : wraps
+    AdminPermissionDecorator --|> UserDecorator
+    DoctorPermissionDecorator --|> UserDecorator
+    NursePermissionDecorator --|> UserDecorator
+    AuthService --> IUser : creates
+
+    %% Visitor Pattern (Part E)
+    PatientSummaryVisitor ..|> ReportVisitor
+    FinancialReportVisitor ..|> ReportVisitor
+    PatientRecord ..|> Visitable
+    PatientRecord --> InsurancePlan
+
+    %% Data Access
+    PatientDAO --> DatabaseManager
+    AppointmentDAO --> DatabaseManager
+    InsuranceDAO --> DatabaseManager
+    PatientDAO --> PatientRecord
+    AppointmentDAO --> Appointment
+    InsuranceDAO --> InsurancePlan
+
+    %% Controllers
+    PatientController --> PatientPanel
+    PatientController --> PatientDAO
+    AppointmentController --> AppointmentPanel
+    AppointmentController --> AppointmentScheduler
+    BillingController --> BillingPanel
+    BillingController --> BillingHandler
+    ReportController --> ReportPanel
+    ReportController --> ReportVisitor
+    StaffController --> StaffPanel
+    StaffController --> AuthService
+```
+
+![Complete Application UML Class Diagram.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/Complete_Application_UML_Class_Diagram.png)
+
+(You can find the High Res images in the Github Project Repo)
 
 ### System Architecture Type
 
@@ -339,6 +735,10 @@ mvn exec:java -Dexec.mainClass="com.globemed.Main"
 | Doctor | doc | 1101 | Doctor-specific decorations |
 | Nurse | nurse | 1101 | Limited permission decorations |
 
+## **9. User Interface (UI) Screenshots**
+
+Please check the published doc to see the UI screenshots doc
+
 ---
 
 ## Next Documentation Phases
@@ -351,13 +751,5 @@ The subsequent documents will provide detailed analysis of each design pattern i
 - **Document 05**: Part D - Staff Roles & Permissions (Decorator Pattern)
 - **Document 06**: Part E - Medical Report Generation (Visitor Pattern)
 - **Document 07**: Part F - Security Implementation & Additional Patterns
-
-Each document will include:
-
-- UML diagrams for pattern implementation
-- Detailed code analysis with educational insights
-- Problem-solution mapping
-- Testing scenarios and validation
-- Academic discussion of pattern benefits and trade-offs
 
 ---
