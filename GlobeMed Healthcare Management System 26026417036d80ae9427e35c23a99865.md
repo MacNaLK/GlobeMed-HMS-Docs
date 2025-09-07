@@ -4,15 +4,13 @@
 
 **Project Name**: GlobeMed Healthcare Management System
 
-**Repository**: isharax9/healthcare-system | [https://github.com/isharax9/healthcare-system](https://github.com/isharax9/healthcare-system)
+**Repository**: [https://github.com/isharax9/healthcare-system](https://github.com/isharax9/healthcare-system)
 
 **Author**: Ishara Lakshitha
 
 **Purpose**: Academic/Educational - Design Patterns Implementation
 
 ---
-
-## Table Of Content
 
 ---
 
@@ -340,13 +338,41 @@ mvn exec:java -Dexec.mainClass="com.globemed.Main"
 
 ![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image.png)
 
-### Admin Page Native UI Theme
+### Admin POV Native UI Theme
 
 ![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%201.png)
 
-### Admin Page Flatlaf UI Theme
+### Admin POV FlatLaf UI Theme
 
 ![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%202.png)
+
+### Admin POV Patient Management
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%203.png)
+
+### Admin POV Appointments
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%204.png)
+
+### Admin POV Billing
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%205.png)
+
+### Admin POV Reports
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%206.png)
+
+### Admin POV Staff Management
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%207.png)
+
+### Nurse POV
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%208.png)
+
+### Doctor POV
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%209.png)
 
 ---
 
