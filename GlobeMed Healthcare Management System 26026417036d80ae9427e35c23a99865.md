@@ -6,8 +6,6 @@
 
 **Repository**: isharax9/healthcare-system | [https://github.com/isharax9/healthcare-system](https://github.com/isharax9/healthcare-system)
 
-Published Doc: [https://macna.gitbook.io/macna.lk/globemed-hms-docs](https://macna.gitbook.io/macna.lk/globemed-hms-docs)
-
 **Author**: Ishara Lakshitha
 
 **Purpose**: Academic/Educational - Design Patterns Implementation
@@ -338,9 +336,17 @@ mvn exec:java -Dexec.mainClass="com.globemed.Main"
 
 ## **9. User Interface (UI) Screenshots**
 
-![Login Page UI](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image.png)
+### Login Page UI
 
-Login Page UI
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image.png)
+
+### Admin Page Native UI Theme
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%201.png)
+
+### Admin Page Flatlaf UI Theme
+
+![image.png](GlobeMed%20Healthcare%20Management%20System%2026026417036d80ae9427e35c23a99865/image%202.png)
 
 ---
 
