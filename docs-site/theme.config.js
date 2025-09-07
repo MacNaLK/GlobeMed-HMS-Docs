@@ -30,8 +30,7 @@ module.exports = {
   prevLinks: true,
   nextLinks: true,
   footer: {
-    text: <>© 2025 Ishara Lakshitha. All rights reserved.</>,
-    component: null
+    text: "© 2025 Ishara Lakshitha. All rights reserved."
   },
   unstable_faviconGlyph: "🏥",
   sidebar: {
@@ -50,13 +49,14 @@ module.exports = {
   //     </div>
   //   )
   // },
-  // Temporarily disabled as this feature is not working correctly
-  // editLink: {
-  //   text: "Edit this page on GitHub →"
-  // },
+  // Disabled edit link as requested
+  editLink: {
+    component: null
+  },
   feedback: {
     content: "Question? Give us feedback →",
-    labels: "feedback"
+    labels: "feedback",
+    useLink: () => "https://github.com/isharax9/healthcare-system/issues/new"
   },
   useNextSeoProps() {
     return {
